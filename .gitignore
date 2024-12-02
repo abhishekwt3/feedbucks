@@ -1,0 +1,39 @@
+# Node modules
+/node_modules
+
+# Build output
+/dist
+/build
+
+# Logs
+*.log
+
+
+# Shopify app specific files
+/shopify-app/node_modules
+/shopify-app/.env
+/shopify-app/.shopify-cli.yml
+/shopify-app/.shopify.env
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Editor specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# NPM and Yarn lock files (useful if you want to lock the package versions in the repository)
+# yarn.lock
+# package-lock.json
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# App extension build files
+extensions/*/dist
+extensions/*/.env
