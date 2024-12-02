@@ -1,4 +1,5 @@
 import React from 'react';
+import { AppProvider } from '@shopify/polaris';
 import { Provider } from '@shopify/app-bridge-react';
 import { useRouter } from 'next/router';
 import FeedbackDashboard from '../components/FeedbackDashboard';
@@ -15,7 +16,9 @@ function Index() {
 
   return (
     <Provider config={config}>
-      <FeedbackDashboard />
+      <AppProvider i18n={{}}>
+        <FeedbackDashboard />
+      </AppProvider>
     </Provider>
   );
 }
