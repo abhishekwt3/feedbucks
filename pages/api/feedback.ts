@@ -1,10 +1,25 @@
+import '@shopify/shopify-api/adapters/node';
+import { shopifyApi, LATEST_API_VERSION } from '@shopify/shopify-api';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Shopify } from '@shopify/shopify-api';
 import prisma from '../../lib/prisma';
+import { SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SCOPES, HOST } from '../../config/shopify';
+
+const shopify = shopifyApi({
+  apiKey: SHOPIFY_API_KEY,
+  apiSecretKey: SHOPIFY_API_SECRET,
+  scopes: SCOPES,
+  hostName: HOST.replace(/https:\/\//, ''),
+  apiVersion: LATEST_API_VERSION,
+  isEmbeddedApp: true,
+});
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const session = await Shopify.Utils.loadCurrentSession(req, res);
+    const session = await shopify.session.getCurrentSession({
+      rawRequest: req,
+      rawResponse: res,
+    });
+
     if (!session) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }

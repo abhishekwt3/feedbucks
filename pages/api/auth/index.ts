@@ -1,14 +1,15 @@
+import '@shopify/shopify-api/adapters/node';
+import { shopifyApi, LATEST_API_VERSION } from '@shopify/shopify-api';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Shopify } from '@shopify/shopify-api';
 import { SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SCOPES, HOST } from '../../../config/shopify';
 
-Shopify.Context.initialize({
-  API_KEY: SHOPIFY_API_KEY,
-  API_SECRET_KEY: SHOPIFY_API_SECRET,
-  SCOPES: SCOPES,
-  HOST_NAME: HOST.replace(/https:\/\//, ''),
-  IS_EMBEDDED_APP: true,
-  API_VERSION: '2023-07'
+const shopify = shopifyApi({
+  apiKey: SHOPIFY_API_KEY,
+  apiSecretKey: SHOPIFY_API_SECRET,
+  scopes: SCOPES,
+  hostName: HOST.replace(/https:\/\//, ''),
+  apiVersion: LATEST_API_VERSION,
+  isEmbeddedApp: true,
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -17,19 +18,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.send("No shop provided");
   }
 
-  const shop = Shopify.Utils.sanitizeShop(req.query.shop as string);
+  const shop = shopify.utils.sanitizeShop(req.query.shop as string);
   if (!shop) {
     res.status(500);
     return res.send("Invalid shop provided");
   }
 
-  const authRoute = await Shopify.Auth.beginAuth(
-    req,
-    res,
+  const authRoute = await shopify.auth.begin({
     shop,
-    '/api/auth/callback',
-    false,
-  );
+    callbackPath: '/api/auth/callback',
+    isOnline: false,
+    rawRequest: req,
+    rawResponse: res,
+  });
 
   res.redirect(authRoute);
 }

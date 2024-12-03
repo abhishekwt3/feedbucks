@@ -1,18 +1,28 @@
+import '@shopify/shopify-api/adapters/node';
+import { shopifyApi, LATEST_API_VERSION } from '@shopify/shopify-api';
 import { NextApiRequest, NextApiResponse } from 'next';
-import {Shopify} from '@shopify/shopify-api';
+import { SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SCOPES, HOST } from '../../../config/shopify';
+
+const shopify = shopifyApi({
+  apiKey: SHOPIFY_API_KEY,
+  apiSecretKey: SHOPIFY_API_SECRET,
+  scopes: SCOPES,
+  hostName: HOST.replace(/https:\/\//, ''),
+  apiVersion: LATEST_API_VERSION,
+  isEmbeddedApp: true,
+});
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const session = await Shopify.Auth.validateAuthCallback(
-      req,
-      res,
-      req.query as Record<string, string | string[]>
-    );
+    const callbackResponse = await shopify.auth.callback({
+      rawRequest: req,
+      rawResponse: res,
+    });
 
     // Store the session in your database here
+    // You may want to use the callbackResponse.session object
 
-    const host = req.query.host;
-    const shop = req.query.shop;
+    const { shop, host } = req.query;
 
     // Redirect to app with shop parameter
     res.redirect(`/?shop=${shop}&host=${host}`);
