@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import Shopify from '@shopify/shopify-api';
+import { Shopify } from '@shopify/shopify-api';
 import { SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SCOPES, HOST } from '../config/shopify';
 
 Shopify.Context.initialize({
