@@ -54,7 +54,7 @@
     const email = document.getElementById('feedback-email').value;
     const rating = document.getElementById('feedback-rating').value;
 
-    fetch('https://your-app-url.com/api/feedback', {
+    fetch('/api/feedback', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
