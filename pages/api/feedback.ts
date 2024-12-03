@@ -15,6 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const skip = (page - 1) * pageSize;
 
       const feedbacks = await prisma.feedback.findMany({
+        where: { shopId: session.shop },
         skip,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
@@ -29,6 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           message,
           email: email || undefined,
           rating: parseInt(rating),
+          shopId: session.shop,
         },
       });
 
