@@ -7,12 +7,26 @@ export class CustomSessionStorage implements SessionStorage {
     try {
       await prisma.session.upsert({
         where: { id: session.id },
-        update: session.toObject(),
-        create: session.toObject(),
+        update: {
+          id: session.id,
+          shop: session.shop,
+          state: session.state,
+          isOnline: session.isOnline,
+          accessToken: session.accessToken,
+          // Add other fields as needed
+        },
+        create: {
+          id: session.id,
+          shop: session.shop,
+          state: session.state,
+          isOnline: session.isOnline,
+          accessToken: session.accessToken,
+          // Add other fields as needed
+        },
       });
       return true;
     } catch (error) {
-      console.error('Failed to store session:', error);
+      console.error(`Error storing session with ID ${session.id}:`, error);
       return false;
     }
   }
@@ -23,10 +37,17 @@ export class CustomSessionStorage implements SessionStorage {
         where: { id },
       });
       if (sessionData) {
-        return new Session(sessionData);
+        return new Session({
+          id: sessionData.id,
+          shop: sessionData.shop,
+          state: sessionData.state,
+          isOnline: sessionData.isOnline,
+          accessToken: sessionData.accessToken,
+          // Add other fields as needed
+        });
       }
     } catch (error) {
-      console.error('Failed to load session:', error);
+      console.error(`Error loading session with ID ${id}:`, error);
     }
     return undefined;
   }
@@ -38,12 +59,16 @@ export class CustomSessionStorage implements SessionStorage {
       });
       return true;
     } catch (error) {
-      console.error('Failed to delete session:', error);
+      console.error(`Error deleting session with ID ${id}:`, error);
       return false;
     }
   }
 
   async deleteSessions(ids: string[]): Promise<boolean> {
+    if (!ids || ids.length === 0) {
+      console.warn('No session IDs provided for deletion.');
+      return false;
+    }
     try {
       await prisma.session.deleteMany({
         where: {
@@ -54,7 +79,7 @@ export class CustomSessionStorage implements SessionStorage {
       });
       return true;
     } catch (error) {
-      console.error('Failed to delete sessions:', error);
+      console.error(`Error deleting sessions with IDs ${ids.join(', ')}:`, error);
       return false;
     }
   }
@@ -64,11 +89,17 @@ export class CustomSessionStorage implements SessionStorage {
       const sessionData = await prisma.session.findMany({
         where: { shop },
       });
-      return sessionData.map(data => new Session(data));
+      return sessionData.map(data => new Session({
+        id: data.id,
+        shop: data.shop,
+        state: data.state,
+        isOnline: data.isOnline,
+        accessToken: data.accessToken,
+        // Add other fields as needed
+      }));
     } catch (error) {
-      console.error('Failed to find sessions by shop:', error);
+      console.error(`Error finding sessions for shop ${shop}:`, error);
       return [];
     }
   }
 }
-
