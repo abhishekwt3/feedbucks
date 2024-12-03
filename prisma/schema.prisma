@@ -16,3 +16,14 @@ model Feedback {
   shopId    String
 }
 
+model Session {
+  id               String    @id
+  shop             String
+  state            String
+  isOnline         Boolean
+  scope            String?
+  expires          DateTime?
+  accessToken      String?
+  onlineAccessInfo Json?
+}
+

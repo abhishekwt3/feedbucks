@@ -34,4 +34,3 @@ export default async function shopifyAuth(req: NextApiRequest, res: NextApiRespo
 
   res.redirect(authRoute);
 }
-

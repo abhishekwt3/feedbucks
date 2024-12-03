@@ -1,8 +1,10 @@
-import '@shopify/shopify-api/adapters/node';
-import { shopifyApi, LATEST_API_VERSION } from '@shopify/shopify-api';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { shopifyApi, LATEST_API_VERSION } from '@shopify/shopify-api';
 import prisma from '../../lib/prisma';
 import { SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SCOPES, HOST } from '../../config/shopify';
+import { CustomSessionStorage } from '../../lib/sessionStorage';
+
+const sessionStorage = new CustomSessionStorage();
 
 const shopify = shopifyApi({
   apiKey: SHOPIFY_API_KEY,
@@ -11,15 +13,17 @@ const shopify = shopifyApi({
   hostName: HOST.replace(/https:\/\//, ''),
   apiVersion: LATEST_API_VERSION,
   isEmbeddedApp: true,
+  sessionStorage,
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const session = await shopify.session.getCurrentSession({
-      rawRequest: req,
-      rawResponse: res,
-    });
+    const sessionId = req.headers['authorization']?.replace('Bearer ', '');
+    if (!sessionId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
 
+    const session = await sessionStorage.loadSession(sessionId);
     if (!session) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
