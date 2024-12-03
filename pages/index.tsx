@@ -5,7 +5,7 @@ import FeedbackDashboard from '../components/FeedbackDashboard';
 
 function Index() {
   const router = useRouter();
-  const { host } = router.query;
+  const { shop, host } = router.query;
 
   const config = {
     apiKey: process.env.NEXT_PUBLIC_SHOPIFY_API_KEY!,
