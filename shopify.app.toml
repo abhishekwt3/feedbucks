@@ -19,6 +19,3 @@ api_version = "2023-07"
 
 [pos]
 embedded = false
-
-[build]
-include_config_on_deploy = true
