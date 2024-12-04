@@ -77,9 +77,9 @@ function EmbeddedApp() {
     getSessionToken();
   }, []);
 
-  if (!accessToken) {
-    return <div>Authenticating...</div>;
-  }
+  // if (!accessToken) {
+  //   return <div>Authenticating...</div>;
+  // }
 
   return <FeedbackDashboard />;
 }
