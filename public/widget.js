@@ -54,7 +54,7 @@
     const email = document.getElementById('feedback-email').value;
     const rating = document.getElementById('feedback-rating').value;
 
-    fetch('/api/feedback', {
+    fetch('https://v0-feedbuck-shopify-appwharfs-projects.vercel.app/api/feedback', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

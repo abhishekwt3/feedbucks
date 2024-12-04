@@ -18,14 +18,15 @@ const shopify = shopifyApi({
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const sessionId = req.headers['authorization']?.replace('Bearer ', '');
+    // Validate the session token
+    const sessionId = req.headers.authorization?.replace('Bearer ', '');
     if (!sessionId) {
-      return res.status(401).json({ success: false, error: 'Unauthorized' });
+      return res.status(401).json({ success: false, error: 'Unauthorized: No session token provided' });
     }
 
     const session = await sessionStorage.loadSession(sessionId);
     if (!session) {
-      return res.status(401).json({ success: false, error: 'Unauthorized' });
+      return res.status(401).json({ success: false, error: 'Unauthorized: Invalid session token' });
     }
 
     if (req.method === 'GET') {

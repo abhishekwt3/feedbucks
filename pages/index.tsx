@@ -1,39 +1,87 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Provider } from '@shopify/app-bridge-react';
 import { useRouter } from 'next/router';
 import { useSearchParams } from 'next/navigation';
+import { authenticatedFetch } from '@shopify/app-bridge-utils';
+import { Redirect } from '@shopify/app-bridge/actions';
+import { AppProvider } from '@shopify/polaris';
 import FeedbackDashboard from '../components/FeedbackDashboard';
 
 function Index() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const shop = searchParams.get('shop');
-  const host = searchParams.get('host');
+  const [appBridgeConfig, setAppBridgeConfig] = useState(null);
 
   useEffect(() => {
-    if (!host && router.isReady) {
-      const queryHost = router.query.host;
-      if (queryHost) {
-        router.replace({ query: { ...router.query, host: queryHost } });
-      }
-    }
-  }, [host, router]);
+    const shop = searchParams.get('shop');
+    const host = searchParams.get('host');
 
-  if (!shop || !host) {
+    if (shop && host) {
+      const config = {
+        apiKey: process.env.NEXT_PUBLIC_SHOPIFY_API_KEY!,
+        host: host,
+        forceRedirect: true
+      };
+      setAppBridgeConfig(config);
+    }
+  }, [searchParams]);
+
+  if (!appBridgeConfig) {
     return <div>Loading...</div>;
   }
 
-  const config = {
-    apiKey: process.env.NEXT_PUBLIC_SHOPIFY_API_KEY!,
-    host: host,
-    forceRedirect: true
-  };
-
   return (
-    <Provider config={config}>
-      <FeedbackDashboard />
+    <Provider config={appBridgeConfig}>
+      <AppProvider i18n={{}}>
+        <EmbeddedApp />
+      </AppProvider>
     </Provider>
   );
+}
+
+function EmbeddedApp() {
+  const [accessToken, setAccessToken] = useState('');
+
+  useEffect(() => {
+    const getSessionToken = async () => {
+      const app = window['app'];
+      if (app) {
+        const sessionToken = await app.getSessionToken();
+        const response = await authenticatedFetch(app)(
+          '/api/auth/token',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ sessionToken }),
+          }
+        );
+        const { accessToken } = await response.json();
+        setAccessToken(accessToken);
+
+        // Call the script-tag API to ensure the widget is injected
+        await authenticatedFetch(app)(
+          '/api/script-tag',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`,
+            },
+          }
+        );
+      }
+    };
+
+    getSessionToken();
+  }, []);
+
+  if (!accessToken) {
+    return <div>Authenticating...</div>;
+  }
+
+  return <FeedbackDashboard />;
 }
 
 export default Index;

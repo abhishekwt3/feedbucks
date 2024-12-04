@@ -1,0 +1,24 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "Feedbucks"
+client_id = "81efd528527cdd7305a2a730d326e427"
+application_url = "https://v0-feedbuck-shopify-appwharfs-projects.vercel.app"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products,write_products,read_script_tags,write_script_tags"
+
+[auth]
+redirect_urls = [
+  "https://v0-feedbuck-shopify-appwharfs-projects.vercel.app/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
+[build]
+include_config_on_deploy = true
