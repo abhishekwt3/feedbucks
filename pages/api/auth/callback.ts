@@ -25,9 +25,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Store the session
     await sessionStorage.storeSession(callbackResponse.session);
 
-    // Redirect to app with shop parameter
+    // Get the shop and host from the query parameters
     const { shop, host } = req.query;
-    const redirectUrl = `/?shop=${shop}&host=${host}`;
+    
+    // Construct the redirect URL using the full app URL
+    const redirectUrl = `${HOST}/?shop=${shop}&host=${host}`;
     res.redirect(redirectUrl);
   } catch (error) {
     console.error('Error during auth callback:', error);
