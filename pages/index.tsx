@@ -6,6 +6,7 @@ import { authenticatedFetch } from '@shopify/app-bridge-utils';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { AppProvider } from '@shopify/polaris';
 import FeedbackDashboard from '../components/FeedbackDashboard';
+import Script from 'next/script';
 
 function Index() {
   const router = useRouter();
@@ -41,6 +42,7 @@ function Index() {
 
 function EmbeddedApp() {
   const [accessToken, setAccessToken] = useState('');
+  const [shop, setShop] = useState('');
 
   useEffect(() => {
     const getSessionToken = async () => {
@@ -60,17 +62,18 @@ function EmbeddedApp() {
         const { accessToken } = await response.json();
         setAccessToken(accessToken);
 
-        // Call the script-tag API to ensure the widget is injected
-        await authenticatedFetch(app)(
-          '/api/script-tag',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${accessToken}`,
-            },
-          }
-        );
+        // Get the shop
+        const shopResponse = await authenticatedFetch(app)('/api/shop');
+        const { shop } = await shopResponse.json();
+        setShop(shop);
+
+        // Inject the widget script
+        const script = document.createElement('script');
+        script.src = `${process.env.NEXT_PUBLIC_HOST}/widget.js`;
+        script.onload = () => {
+          window.initializeFeedbackWidget(shop, process.env.NEXT_PUBLIC_SHOPIFY_API_KEY);
+        };
+        document.body.appendChild(script);
       }
     };
 
@@ -81,7 +84,15 @@ function EmbeddedApp() {
   //   return <div>Authenticating...</div>;
   // }
 
-  return <FeedbackDashboard />;
+  return (
+    <>
+      <FeedbackDashboard />
+      <Script
+        id="shopify-app-bridge"
+        src="https://unpkg.com/@shopify/app-bridge@3"
+      />
+    </>
+  );
 }
 
 export default Index;

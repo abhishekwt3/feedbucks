@@ -1,79 +1,109 @@
 (function() {
-  // Create widget container
-  const widgetContainer = document.createElement('div');
-  widgetContainer.id = 'shopify-feedback-widget';
-  document.body.appendChild(widgetContainer);
+  function initializeFeedbackWidget(shopOrigin, apiKey) {
+    const AppBridge = window['app-bridge'];
+    const actions = window['app-bridge'].actions;
+    const Modal = actions.Modal;
+    const Button = actions.Button;
 
-  // Create widget button
-  const widgetButton = document.createElement('button');
-  widgetButton.textContent = 'Feedback';
-  widgetButton.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    padding: 10px 20px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    z-index: 1000;
-  `;
-  widgetContainer.appendChild(widgetButton);
-
-  // Create feedback form (hidden by default)
-  const feedbackForm = document.createElement('div');
-  feedbackForm.style.cssText = `
-    display: none;
-    position: fixed;
-    bottom: 80px;
-    right: 20px;
-    width: 300px;
-    padding: 20px;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    z-index: 1001;
-  `;
-  feedbackForm.innerHTML = `
-    <textarea id="feedback-message" placeholder="Your feedback" style="width: 100%; margin-bottom: 10px;"></textarea>
-    <input type="email" id="feedback-email" placeholder="Your email (optional)" style="width: 100%; margin-bottom: 10px;">
-    <input type="number" id="feedback-rating" min="1" max="5" placeholder="Rating (1-5)" style="width: 100%; margin-bottom: 10px;">
-    <button id="submit-feedback" style="padding: 5px 10px; background-color: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer;">Submit</button>
-  `;
-  widgetContainer.appendChild(feedbackForm);
-
-  // Toggle feedback form
-  widgetButton.addEventListener('click', () => {
-    feedbackForm.style.display = feedbackForm.style.display === 'none' ? 'block' : 'none';
-  });
-
-  // Handle feedback submission
-  document.getElementById('submit-feedback').addEventListener('click', () => {
-    const message = document.getElementById('feedback-message').value;
-    const email = document.getElementById('feedback-email').value;
-    const rating = document.getElementById('feedback-rating').value;
-
-    fetch('https://v0-feedbuck-shopify-appwharfs-projects.vercel.app/api/feedback', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ message, email, rating }),
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        alert('Feedback submitted successfully!');
-        feedbackForm.style.display = 'none';
-      } else {
-        alert('Error submitting feedback: ' + (data.error || 'Unknown error'));
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('An error occurred while submitting feedback.');
+    const app = AppBridge.createApp({
+      apiKey: apiKey,
+      shopOrigin: shopOrigin,
     });
-  });
+
+    // Create feedback button
+    const feedbackButton = Button.create(app, {
+      label: 'Feedback',
+      onClick: () => {
+        showFeedbackModal();
+      },
+    });
+
+    // Render feedback button
+    feedbackButton.dispatch(Button.Action.SHOW);
+
+    function showFeedbackModal() {
+      const modalOptions = {
+        title: 'Provide Feedback',
+        message: 'We value your feedback. Please share your thoughts with us.',
+        footer: {
+          buttons: [
+            {
+              label: 'Cancel',
+              style: Modal.Style.SECONDARY,
+              action: () => modal.dispatch(Modal.Action.CLOSE),
+            },
+            {
+              label: 'Submit',
+              style: Modal.Style.PRIMARY,
+              action: () => submitFeedback(),
+            },
+          ],
+        },
+      };
+
+      const modal = Modal.create(app, modalOptions);
+      modal.dispatch(Modal.Action.OPEN);
+
+      // Add form fields to the modal
+      const messageInput = document.createElement('textarea');
+      messageInput.placeholder = 'Your feedback';
+      messageInput.style.width = '100%';
+      messageInput.style.marginBottom = '10px';
+
+      const emailInput = document.createElement('input');
+      emailInput.type = 'email';
+      emailInput.placeholder = 'Your email (optional)';
+      emailInput.style.width = '100%';
+      emailInput.style.marginBottom = '10px';
+
+      const ratingInput = document.createElement('input');
+      ratingInput.type = 'number';
+      ratingInput.min = '1';
+      ratingInput.max = '5';
+      ratingInput.placeholder = 'Rating (1-5)';
+      ratingInput.style.width = '100%';
+      ratingInput.style.marginBottom = '10px';
+
+      modal.dispatch(Modal.Action.UPDATE, {
+        contents: [messageInput, emailInput, ratingInput],
+      });
+
+      function submitFeedback() {
+        const message = messageInput.value;
+        const email = emailInput.value;
+        const rating = ratingInput.value;
+
+        fetch('https://v0-feedbuck-shopify-appwharfs-projects.vercel.app/api/feedback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message, email, rating }),
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            modal.dispatch(Modal.Action.UPDATE, {
+              message: 'Feedback submitted successfully!',
+            });
+            setTimeout(() => modal.dispatch(Modal.Action.CLOSE), 2000);
+          } else {
+            modal.dispatch(Modal.Action.UPDATE, {
+              message: 'Error submitting feedback: ' + (data.error || 'Unknown error'),
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          modal.dispatch(Modal.Action.UPDATE, {
+            message: 'An error occurred while submitting feedback.',
+          });
+        });
+      }
+    }
+  }
+
+  // Expose the initialization function globally
+  window.initializeFeedbackWidget = initializeFeedbackWidget;
 })();
 

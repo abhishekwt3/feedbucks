@@ -14,6 +14,13 @@ const nextConfig = {
       },
     ];
   },
+  webpack: (config) => {
+    config.externals.push({
+      '@shopify/app-bridge': 'AppBridge',
+    });
+    return config;
+  },
 }
 
 module.exports = nextConfig
+
