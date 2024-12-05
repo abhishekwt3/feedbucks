@@ -1,20 +1,12 @@
+import createApp from '@shopify/app-bridge';
+import { Modal, Button } from '@shopify/app-bridge/actions';
+
 (function() {
   function initializeFeedbackWidget(shopOrigin, apiKey) {
-    const createApp = window['createApp'];
-    const actions = window['actions'];
-    
-    if (!createApp || !actions) {
-      console.error('App Bridge is not properly loaded');
-      return;
-    }
-
     const app = createApp({
       apiKey: apiKey,
-      shopOrigin: shopOrigin,
+      host: shopOrigin,
     });
-
-    const Modal = actions.Modal;
-    const Button = actions.Button;
 
     // Create feedback button
     const feedbackButton = Button.create(app, {

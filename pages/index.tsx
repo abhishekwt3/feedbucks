@@ -1,18 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Provider } from '@shopify/app-bridge-react';
+import { Provider, useAppBridge } from '@shopify/app-bridge-react';
 import { useRouter } from 'next/router';
 import { useSearchParams } from 'next/navigation';
-import { authenticatedFetch } from '@shopify/app-bridge-utils';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { AppProvider } from '@shopify/polaris';
+import { authenticatedFetch, getSessionToken } from '@shopify/app-bridge-utils';
 import FeedbackDashboard from '../components/FeedbackDashboard';
-import Script from 'next/script';
+import { ClientApplication } from '@shopify/app-bridge';
 
-// Extend the Window interface to include App Bridge properties
 declare global {
   interface Window {
-    createApp?: (config: any) => any;
-    actions?: any;
+    initializeFeedbackWidget: (shop: string, apiKey: string) => void;
   }
 }
 
@@ -49,66 +47,49 @@ function Index() {
 }
 
 function EmbeddedApp() {
+  const app = useAppBridge();
   const [accessToken, setAccessToken] = useState('');
   const [shop, setShop] = useState('');
-  const [isAppBridgeLoaded, setIsAppBridgeLoaded] = useState(false);
 
   useEffect(() => {
-    const getSessionToken = async () => {
-      if (!isAppBridgeLoaded) return;
+    const fetchSessionToken = async () => {
+      const sessionToken = await getSessionToken(app);
+      const response = await authenticatedFetch(app)('/api/auth/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionToken }),
+      });
+      const { accessToken } = await response.json();
+      setAccessToken(accessToken);
 
-      const app = window['app'];
-      if (app) {
-        const sessionToken = await app.getSessionToken();
-        const response = await authenticatedFetch(app)(
-          '/api/auth/token',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ sessionToken }),
-          }
-        );
-        const { accessToken } = await response.json();
-        setAccessToken(accessToken);
+      // Get the shop
+      const shopResponse = await authenticatedFetch(app)('/api/shop');
+      const { shop } = await shopResponse.json();
+      setShop(shop);
 
-        // Get the shop
-        const shopResponse = await authenticatedFetch(app)('/api/shop');
-        const { shop } = await shopResponse.json();
-        setShop(shop);
-
-        // Inject the widget script
-        const script = document.createElement('script');
-        script.src = `${process.env.NEXT_PUBLIC_HOST}/widget.js`;
-        script.onload = () => {
-          if (window.createApp && window.actions) {
-            window.initializeFeedbackWidget(shop, process.env.NEXT_PUBLIC_SHOPIFY_API_KEY!);
-          } else {
-            console.error('App Bridge is not fully loaded');
-          }
-        };
-        document.body.appendChild(script);
-      }
+      // Inject the widget script
+      const script = document.createElement('script');
+      script.src = `${process.env.NEXT_PUBLIC_HOST}/widget.js`;
+      script.onload = () => {
+        if (window.initializeFeedbackWidget) {
+          window.initializeFeedbackWidget(shop, process.env.NEXT_PUBLIC_SHOPIFY_API_KEY!);
+        } else {
+          console.error('Feedback widget initialization function not found');
+        }
+      };
+      document.body.appendChild(script);
     };
 
-    getSessionToken();
-  }, [isAppBridgeLoaded]);
+    fetchSessionToken();
+  }, [app]);
 
   if (!accessToken) {
-    console.log("No access token found!")
+    console.log("Token not found !")
   }
 
-  return (
-    <>
-      <FeedbackDashboard />
-      <Script
-        id="shopify-app-bridge"
-        src="https://unpkg.com/@shopify/app-bridge@3"
-        onLoad={() => setIsAppBridgeLoaded(true)}
-      />
-    </>
-  );
+  return <FeedbackDashboard />;
 }
 
 export default Index;
