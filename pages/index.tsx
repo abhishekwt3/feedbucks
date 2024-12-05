@@ -96,7 +96,7 @@ function EmbeddedApp() {
   }, [isAppBridgeLoaded]);
 
   if (!accessToken) {
-    return <div>Authenticating...</div>;
+    console.log("No access token found!")
   }
 
   return (
