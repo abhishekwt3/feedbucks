@@ -1,14 +1,20 @@
 (function() {
   function initializeFeedbackWidget(shopOrigin, apiKey) {
-    const AppBridge = window['app-bridge'];
-    const actions = window['app-bridge'].actions;
-    const Modal = actions.Modal;
-    const Button = actions.Button;
+    const createApp = window['createApp'];
+    const actions = window['actions'];
+    
+    if (!createApp || !actions) {
+      console.error('App Bridge is not properly loaded');
+      return;
+    }
 
-    const app = AppBridge.createApp({
+    const app = createApp({
       apiKey: apiKey,
       shopOrigin: shopOrigin,
     });
+
+    const Modal = actions.Modal;
+    const Button = actions.Button;
 
     // Create feedback button
     const feedbackButton = Button.create(app, {

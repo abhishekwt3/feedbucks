@@ -8,10 +8,18 @@ import { AppProvider } from '@shopify/polaris';
 import FeedbackDashboard from '../components/FeedbackDashboard';
 import Script from 'next/script';
 
+// Extend the Window interface to include App Bridge properties
+declare global {
+  interface Window {
+    createApp?: (config: any) => any;
+    actions?: any;
+  }
+}
+
 function Index() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [appBridgeConfig, setAppBridgeConfig] = useState(null);
+  const [appBridgeConfig, setAppBridgeConfig] = useState<any>(null);
 
   useEffect(() => {
     const shop = searchParams.get('shop');
@@ -43,9 +51,12 @@ function Index() {
 function EmbeddedApp() {
   const [accessToken, setAccessToken] = useState('');
   const [shop, setShop] = useState('');
+  const [isAppBridgeLoaded, setIsAppBridgeLoaded] = useState(false);
 
   useEffect(() => {
     const getSessionToken = async () => {
+      if (!isAppBridgeLoaded) return;
+
       const app = window['app'];
       if (app) {
         const sessionToken = await app.getSessionToken();
@@ -71,18 +82,22 @@ function EmbeddedApp() {
         const script = document.createElement('script');
         script.src = `${process.env.NEXT_PUBLIC_HOST}/widget.js`;
         script.onload = () => {
-          window.initializeFeedbackWidget(shop, process.env.NEXT_PUBLIC_SHOPIFY_API_KEY);
+          if (window.createApp && window.actions) {
+            window.initializeFeedbackWidget(shop, process.env.NEXT_PUBLIC_SHOPIFY_API_KEY!);
+          } else {
+            console.error('App Bridge is not fully loaded');
+          }
         };
         document.body.appendChild(script);
       }
     };
 
     getSessionToken();
-  }, []);
+  }, [isAppBridgeLoaded]);
 
-  // if (!accessToken) {
-  //   return <div>Authenticating...</div>;
-  // }
+  if (!accessToken) {
+    return <div>Authenticating...</div>;
+  }
 
   return (
     <>
@@ -90,6 +105,7 @@ function EmbeddedApp() {
       <Script
         id="shopify-app-bridge"
         src="https://unpkg.com/@shopify/app-bridge@3"
+        onLoad={() => setIsAppBridgeLoaded(true)}
       />
     </>
   );
