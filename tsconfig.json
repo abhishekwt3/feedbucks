@@ -16,7 +16,8 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "types": ["@shopify/app-bridge-types"]
   },
   "include": [
     "next-env.d.ts",
